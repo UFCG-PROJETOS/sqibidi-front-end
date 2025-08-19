@@ -1,3 +1,6 @@
+Requsitos:
+- Versão v24.5.0 do node
+
 ## Como executar o projeto:
 
 Instalar dependências
