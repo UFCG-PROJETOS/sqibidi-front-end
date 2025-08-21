@@ -1,24 +1,17 @@
 import {
 	Alert,
 	Box,
-	Button,
 	CircularProgress,
 	Container,
-	Paper,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	TextField,
 	Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import initSqlJs, { type Database, type SqlValue } from "sql.js";
 import Header from "./components/Header";
+import TableBox from "./components/Header/main-page/TableBox";
+import TextBox from "./components/Header/main-page/Text-box";
 
-type TableData = {
+export type TableData = {
 	columns: string[];
 	rows: Record<string, SqlValue>[];
 };
@@ -128,83 +121,25 @@ function App() {
 		}
 	};
 
-	// Generate a unique key for each row based on its content
-	const generateRowKey = (row: Record<string, SqlValue>, index: number) => {
-		return `row-${index}-${Object.values(row).join("-")}`;
-	};
-
 	return (
 		<div>
 			<Header />
-
 			<Container maxWidth="lg" sx={{ py: 4 }}>
-				<TextField
-					fullWidth
-					multiline
-					minRows={4}
-					maxRows={8}
-					variant="outlined"
-					label="Enter SQL Query"
-					placeholder="SELECT * FROM users;"
-					value={query}
-					onChange={(e) => setQuery(e.target.value)}
-					onKeyDown={handleKeyDown}
-					disabled={isLoading || !db}
-					sx={{ mb: 2 }}
+				{tableData && <TableBox tableData={tableData} />}
+
+				<TextBox
+					query={query}
+					handleKeyDown={handleKeyDown}
+					setQuery={setQuery}
+					isLoading={isLoading}
+					db={db}
+					executeQuery={executeQuery}
 				/>
-
-				<Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-					<Button
-						variant="contained"
-						onClick={executeQuery}
-						disabled={isLoading || !query.trim() || !db}
-						startIcon={isLoading ? <CircularProgress size={20} /> : null}
-					>
-						{isLoading ? "Executing..." : "Execute (Ctrl+Enter)"}
-					</Button>
-
-					<Button
-						variant="outlined"
-						onClick={() => setQuery("SELECT * FROM users;")}
-						disabled={isLoading || !db}
-					>
-						Sample Query
-					</Button>
-				</Box>
 
 				{error && (
 					<Alert severity="error" sx={{ mb: 3 }}>
 						{error}
 					</Alert>
-				)}
-
-				{tableData && (
-					<Paper sx={{ width: "100%", overflow: "hidden" }}>
-						<TableContainer sx={{ maxHeight: 440 }}>
-							<Table stickyHeader>
-								<TableHead>
-									<TableRow>
-										{tableData.columns.map((column) => (
-											<TableCell key={column}>
-												<strong>{column}</strong>
-											</TableCell>
-										))}
-									</TableRow>
-								</TableHead>
-								<TableBody>
-									{tableData.rows.map((row, rowIndex) => (
-										<TableRow key={generateRowKey(row, rowIndex)}>
-											{tableData.columns.map((column) => (
-												<TableCell key={`${column}-${row[column]}`}>
-													{String(row[column] ?? "NULL")}
-												</TableCell>
-											))}
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</TableContainer>
-					</Paper>
 				)}
 
 				{!db && !error && (
