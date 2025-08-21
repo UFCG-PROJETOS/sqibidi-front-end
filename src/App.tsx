@@ -29,14 +29,12 @@ function App() {
 	const [error, setError] = useState<string | null>(null);
 	const [db, setDb] = useState<Database | null>(null);
 
-	// Initialize the database with sample data
 	useEffect(() => {
 		let database: Database | null = null;
 
 		const initDb = async () => {
 			try {
 				const SQL = await initSqlJs({
-					// Required to load the wasm binary asynchronously
 					locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
 				});
 
