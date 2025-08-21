@@ -8,7 +8,7 @@ import {
 	TableRow,
 } from "@mui/material";
 import type { SqlValue } from "sql.js";
-import type { TableData } from "../../../App";
+import type { TableData } from "../../App";
 
 export default function TableBox({ tableData }: TableProps) {
 	const generateRowKey = (row: Record<string, SqlValue>, index: number) => {

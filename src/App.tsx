@@ -7,9 +7,9 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import initSqlJs, { type Database, type SqlValue } from "sql.js";
-import Header from "./components/Header";
-import TableBox from "./components/Header/main-page/TableBox";
-import TextBox from "./components/Header/main-page/Text-box";
+import Header from "./components/header";
+import TableBox from "./components/main-page/TableBox";
+import TextBox from "./components/main-page/Text-box";
 
 export type TableData = {
 	columns: string[];
