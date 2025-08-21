@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import initSqlJs, { type Database, type SqlValue } from "sql.js";
+import Header from "./components/Header";
 
 type TableData = {
 	columns: string[];
@@ -133,87 +134,87 @@ function App() {
 	};
 
 	return (
-		<Container maxWidth="lg" sx={{ py: 4 }}>
-			<Typography variant="h4" component="h1" gutterBottom>
-				SQL.js Query Executor
-			</Typography>
+		<div>
+			<Header />
 
-			<TextField
-				fullWidth
-				multiline
-				minRows={4}
-				maxRows={8}
-				variant="outlined"
-				label="Enter SQL Query"
-				placeholder="SELECT * FROM users;"
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-				onKeyDown={handleKeyDown}
-				disabled={isLoading || !db}
-				sx={{ mb: 2 }}
-			/>
-
-			<Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-				<Button
-					variant="contained"
-					onClick={executeQuery}
-					disabled={isLoading || !query.trim() || !db}
-					startIcon={isLoading ? <CircularProgress size={20} /> : null}
-				>
-					{isLoading ? "Executing..." : "Execute (Ctrl+Enter)"}
-				</Button>
-
-				<Button
+			<Container maxWidth="lg" sx={{ py: 4 }}>
+				<TextField
+					fullWidth
+					multiline
+					minRows={4}
+					maxRows={8}
 					variant="outlined"
-					onClick={() => setQuery("SELECT * FROM users;")}
+					label="Enter SQL Query"
+					placeholder="SELECT * FROM users;"
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					onKeyDown={handleKeyDown}
 					disabled={isLoading || !db}
-				>
-					Sample Query
-				</Button>
-			</Box>
+					sx={{ mb: 2 }}
+				/>
 
-			{error && (
-				<Alert severity="error" sx={{ mb: 3 }}>
-					{error}
-				</Alert>
-			)}
+				<Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+					<Button
+						variant="contained"
+						onClick={executeQuery}
+						disabled={isLoading || !query.trim() || !db}
+						startIcon={isLoading ? <CircularProgress size={20} /> : null}
+					>
+						{isLoading ? "Executing..." : "Execute (Ctrl+Enter)"}
+					</Button>
 
-			{tableData && (
-				<Paper sx={{ width: "100%", overflow: "hidden" }}>
-					<TableContainer sx={{ maxHeight: 440 }}>
-						<Table stickyHeader>
-							<TableHead>
-								<TableRow>
-									{tableData.columns.map((column) => (
-										<TableCell key={column}>
-											<strong>{column}</strong>
-										</TableCell>
-									))}
-								</TableRow>
-							</TableHead>
-							<TableBody>
-								{tableData.rows.map((row, rowIndex) => (
-									<TableRow key={generateRowKey(row, rowIndex)}>
+					<Button
+						variant="outlined"
+						onClick={() => setQuery("SELECT * FROM users;")}
+						disabled={isLoading || !db}
+					>
+						Sample Query
+					</Button>
+				</Box>
+
+				{error && (
+					<Alert severity="error" sx={{ mb: 3 }}>
+						{error}
+					</Alert>
+				)}
+
+				{tableData && (
+					<Paper sx={{ width: "100%", overflow: "hidden" }}>
+						<TableContainer sx={{ maxHeight: 440 }}>
+							<Table stickyHeader>
+								<TableHead>
+									<TableRow>
 										{tableData.columns.map((column) => (
-											<TableCell key={`${column}-${row[column]}`}>
-												{String(row[column] ?? "NULL")}
+											<TableCell key={column}>
+												<strong>{column}</strong>
 											</TableCell>
 										))}
 									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</TableContainer>
-				</Paper>
-			)}
+								</TableHead>
+								<TableBody>
+									{tableData.rows.map((row, rowIndex) => (
+										<TableRow key={generateRowKey(row, rowIndex)}>
+											{tableData.columns.map((column) => (
+												<TableCell key={`${column}-${row[column]}`}>
+													{String(row[column] ?? "NULL")}
+												</TableCell>
+											))}
+										</TableRow>
+									))}
+								</TableBody>
+							</Table>
+						</TableContainer>
+					</Paper>
+				)}
 
-			{!db && !error && (
-				<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-					<CircularProgress size={24} />
-					<Typography>Initializing database...</Typography>
-				</Box>
-			)}
-		</Container>
+				{!db && !error && (
+					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+						<CircularProgress size={24} />
+						<Typography>Initializing database...</Typography>
+					</Box>
+				)}
+			</Container>
+		</div>
 	);
 }
 
