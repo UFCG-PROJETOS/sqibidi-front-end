@@ -4,9 +4,9 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "npx @biomejs/biome check . && vite",
+		"dev": "npx @biomejs/biome check ./src && vite",
 		"build": "tsc -b && vite build",
-		"lint": "npx @biomejs/biome check .",
+		"lint": "npx @biomejs/biome check ./src",
 		"preview": "vite preview"
 	},
 	"dependencies": {
