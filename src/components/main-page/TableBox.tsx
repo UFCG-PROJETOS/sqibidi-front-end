@@ -6,17 +6,30 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
+	Typography,
 } from "@mui/material";
 import type { SqlValue } from "sql.js";
 import type { TableData } from "../../App";
 
-export default function TableBox({ tableData }: TableProps) {
+interface TableBoxProps {
+	tableData: TableData;
+}
+
+export default function TableBox({ tableData }: TableBoxProps) {
 	const generateRowKey = (row: Record<string, SqlValue>, index: number) => {
 		return `row-${index}-${Object.values(row).join("-")}`;
 	};
 
+	if (!tableData.rows.length) {
+		return (
+			<Paper sx={{ p: 2, mb: 2 }}>
+				<Typography>No data available for table {tableData.name}</Typography>
+			</Paper>
+		);
+	}
+
 	return (
-		<Paper sx={{ width: "100%", overflow: "hidden" }}>
+		<Paper sx={{ width: "100%", overflow: "hidden", mb: 2 }}>
 			<TableContainer sx={{ maxHeight: 440 }}>
 				<Table stickyHeader>
 					<TableHead>
@@ -44,7 +57,3 @@ export default function TableBox({ tableData }: TableProps) {
 		</Paper>
 	);
 }
-
-export type TableProps = {
-	tableData: TableData;
-};
