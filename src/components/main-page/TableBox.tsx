@@ -14,6 +14,7 @@ export default function TableBox({ tableData }: TableProps) {
 	const generateRowKey = (row: Record<string, SqlValue>, index: number) => {
 		return `row-${index}-${Object.values(row).join("-")}`;
 	};
+
 	return (
 		<Paper sx={{ width: "100%", overflow: "hidden" }}>
 			<TableContainer sx={{ maxHeight: 440 }}>

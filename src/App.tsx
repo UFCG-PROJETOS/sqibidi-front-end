@@ -5,11 +5,13 @@ import {
 	Container,
 	Typography,
 } from "@mui/material";
+import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import initSqlJs, { type Database, type SqlValue } from "sql.js";
 import Header from "./components/header";
 import TableBox from "./components/main-page/TableBox";
 import TextBox from "./components/main-page/Text-box";
+// import { routes } from "./routes/routes";
 
 export type TableData = {
 	columns: string[];
@@ -24,19 +26,30 @@ function App() {
 	const [db, setDb] = useState<Database | null>(null);
 
 	useEffect(() => {
-		let database: Database | null = null;
+		let databaseFetched: Database | null = null;
 
 		const initDb = async () => {
+			// const chalenge = await axios
+			// 	.get("http://127.0.0.1:8000/question/day_question", {
+			// 		headers: {
+			// 			accept: "application/json",
+			// 		},
+			// 	})
+			// 	.then((res) => {
+			// 		return res.data;
+			// 	});
+			// // .catch((error) => {
+			// // 	setError(error.message);
+			// // });
+
 			try {
 				const SQL = await initSqlJs({
 					locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
 				});
 
-				// Create a new database
-				database = new SQL.Database();
+				databaseFetched = new SQL.Database();
 
-				// Create a sample table and insert some data
-				database.run(`
+				databaseFetched.run(`
           CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -50,36 +63,32 @@ function App() {
             ('Bob Johnson', 'bob@example.com');
         `);
 
-				setDb(database);
+				setDb(databaseFetched);
 			} catch (err) {
 				setError(
 					`Failed to initialize database: ${
 						err instanceof Error ? err.message : "Unknown error"
 					}`,
 				);
-				console.error(err);
 			}
 		};
 
 		initDb();
 
-		// Cleanup function to close the database when the component unmounts
 		return () => {
-			if (database) {
-				database.close();
+			if (databaseFetched) {
+				databaseFetched.close();
 			}
 		};
 	}, []);
 
 	const executeQuery = useCallback(async () => {
 		if (!query.trim() || !db) return;
-
 		setIsLoading(true);
 		setError(null);
 		setTableData(null);
 
 		try {
-			// Execute the query
 			const result = db.exec(query);
 
 			if (result.length === 0) {
@@ -90,7 +99,6 @@ function App() {
 				return;
 			}
 
-			// Get the first result set
 			const firstResult = result[0];
 			const columns = firstResult.columns;
 			const rows = firstResult.values.map((row) => {
@@ -125,7 +133,13 @@ function App() {
 		<div>
 			<Header />
 			<Container maxWidth="lg" sx={{ py: 4 }}>
-				{tableData && <TableBox tableData={tableData} />}
+				{isLoading ? (
+					<Alert severity="error" sx={{ mb: 3 }}>
+						{error}
+					</Alert>
+				) : (
+					tableData && <TableBox tableData={tableData} />
+				)}
 
 				<TextBox
 					query={query}
@@ -143,7 +157,14 @@ function App() {
 				)}
 
 				{!db && !error && (
-					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							gap: 2,
+							marginTop: 10,
+						}}
+					>
 						<CircularProgress size={24} />
 						<Typography>Initializing database...</Typography>
 					</Box>

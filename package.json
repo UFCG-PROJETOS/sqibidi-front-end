@@ -5,8 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "npx @biomejs/biome check ./src && vite",
-		"build": "tsc -b && vite build",
-		"lint": "npx @biomejs/biome check ./src",
+		"build": "npx @biomejs/biome check ./src tsc -b && vite build",
+		"lint": "npx @biomejs/biome check --write ./src",
 		"preview": "vite preview"
 	},
 	"dependencies": {
@@ -14,10 +14,11 @@
 		"@emotion/styled": "^11.14.1",
 		"@mui/icons-material": "^7.3.1",
 		"@mui/material": "^7.3.1",
+		"axios": "^1.11.0",
 		"react": "^19.1.0",
 		"react-dom": "^19.1.0",
-		"sql.js": "^1.13.0",
-		"react-icons": "^5.5.0"
+		"react-icons": "^5.5.0",
+		"sql.js": "^1.13.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.1.3",
