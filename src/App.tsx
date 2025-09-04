@@ -5,7 +5,6 @@ import {
 	Container,
 	Typography,
 } from "@mui/material";
-import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import initSqlJs, { type Database, type SqlValue } from "sql.js";
 import Header from "./components/header";
