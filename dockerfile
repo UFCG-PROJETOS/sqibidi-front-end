@@ -1,13 +1,21 @@
-FROM node:20-alpine
+FROM node:18-alpine AS builder
 
-WORKDIR /app/frontend
+WORKDIR /
 
 COPY package*.json ./
-
 RUN npm install
 
 COPY . .
+RUN npm run build
 
-EXPOSE 5173
+FROM node:18-alpine
 
-CMD ["npm", "run", "dev", "--", "--port", "5173"]
+WORKDIR /
+
+RUN npm install -g serve
+
+COPY --from=builder ./dist ./dist
+
+EXPOSE 3000
+
+CMD ["serve", "-s", "dist", "-l", "3000"]
