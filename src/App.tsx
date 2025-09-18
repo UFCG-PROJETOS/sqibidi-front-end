@@ -119,6 +119,7 @@ function App() {
 		setTableData(null);
 
 		try {
+			if (regexChecker.test(query)) throw new Error("Invalid SQL query");
 			const result = db.exec(query);
 
 			if (result.length === 0) {
