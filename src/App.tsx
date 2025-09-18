@@ -97,6 +97,12 @@ function App() {
 
 				const dayQuestionResponse = await axios.get(
 					"http://localhost:8000/question/day_question/",
+					{
+						headers: {
+							Accept: "application/json",
+							"Content-Type": "application/json",
+						},
+					},
 				);
 				const sqlCode = dayQuestionResponse.data.code;
 				const questionId = dayQuestionResponse.data.id;
