@@ -2,7 +2,7 @@ name: publishContainer
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   docker:
@@ -27,4 +27,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/app:latest
+          tags: jramonalves/app:latest
