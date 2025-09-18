@@ -47,6 +47,12 @@ function App() {
 
 				const response = await axios.get(
 					"http://localhost:8000/question/day_question/",
+					{
+						headers: {
+							Accept: "application/json",
+							"Content-Type": "application/json",
+						},
+					},
 				);
 				const sqlCode = response.data.code;
 
