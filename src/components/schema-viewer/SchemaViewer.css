@@ -1,0 +1,239 @@
+.schema-viewer {
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	background-color: #f8f9fa; /* Light gray background */
+	border: 1px solid #dee2e6; /* Light border */
+	border-radius: 12px;
+	overflow: hidden;
+	color: #212529; /* Dark text */
+	display: flex;
+	flex-direction: column;
+	height: 75vh;
+}
+
+.schema-controls {
+	display: flex;
+	align-items: center;
+	padding: 12px 15px;
+	background-color: #f8f9fa;
+	border-bottom: 1px solid #dee2e6;
+	gap: 10px;
+}
+
+.schema-controls button {
+	background-color: #fff;
+	color: #495057;
+	border: 1px solid #dee2e6;
+	width: 36px;
+	height: 36px;
+	border-radius: 6px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	transition: background-color 0.2s;
+}
+
+.schema-controls button:hover {
+	background-color: #e9ecef;
+}
+
+.zoom-level {
+	margin-left: auto;
+	font-weight: 500;
+	font-size: 14px;
+	color: #495057;
+}
+
+.schema-container {
+	flex: 1;
+	overflow: hidden;
+	position: relative;
+	cursor: grab;
+	background-color: #ffffff;
+	background-image:
+		linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+	background-size: 20px 20px;
+}
+
+.schema-container:active {
+	cursor: grabbing;
+}
+
+.schema-canvas {
+	position: absolute;
+	transform-origin: 0 0;
+	transition: transform 0.1s;
+}
+
+.table-box {
+	position: absolute;
+	background-color: #ffffff;
+	border: 1px solid #dee2e6;
+	border-radius: 8px;
+	overflow: hidden;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	transition: all 0.2s;
+	cursor: pointer;
+}
+
+.table-box:hover {
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+	transform: translateY(-2px);
+}
+
+.table-box.selected {
+	box-shadow: 0 0 0 2px #0d6efd;
+	border-color: #0d6efd;
+}
+
+.table-header {
+	background-color: #f8f9fa;
+	padding: 12px 15px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	border-bottom: 1px solid #dee2e6;
+}
+
+.table-icon {
+	font-size: 1.2em;
+	color: #0d6efd;
+}
+
+.table-columns {
+	padding: 5px 0;
+}
+
+.table-column {
+	display: grid;
+	grid-template-columns: 40px 1fr 80px;
+	gap: 8px;
+	padding: 8px 15px;
+	border-bottom: 1px solid #f1f3f5;
+	font-size: 14px;
+	align-items: center;
+}
+
+.table-column:last-child {
+	border-bottom: none;
+}
+
+.column-key {
+	display: flex;
+	gap: 4px;
+}
+
+.pk,
+.fk {
+	font-size: 11px;
+	font-weight: bold;
+	padding: 2px 5px;
+	border-radius: 4px;
+	color: #fff;
+}
+
+.pk {
+	background-color: #f59e0b; /* Amber */
+}
+
+.fk {
+	background-color: #10b981; /* Green */
+}
+
+.column-name {
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.column-type {
+	color: #6c757d; /* Gray */
+	font-size: 0.9em;
+	text-align: right;
+}
+
+.relationship-line {
+	position: absolute;
+	height: 2px;
+	background-color: #adb5bd; /* Mid-gray */
+	transform-origin: 0 0;
+	z-index: -1;
+}
+
+.relationship-line::before {
+	content: "";
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: #adb5bd;
+	top: -4px;
+	left: 0;
+}
+
+.relationship-line::after {
+	content: "";
+	position: absolute;
+	width: 0;
+	height: 0;
+	border-top: 5px solid transparent;
+	border-bottom: 5px solid transparent;
+	border-left: 8px solid #adb5bd;
+	top: -4px;
+	right: -8px;
+}
+
+.schema-legend {
+	display: flex;
+	gap: 20px;
+	padding: 15px;
+	background-color: #f8f9fa;
+	border-top: 1px solid #dee2e6;
+}
+
+.legend-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+
+.key-indicator {
+	font-size: 11px;
+	font-weight: bold;
+	padding: 2px 5px;
+	border-radius: 4px;
+	width: 28px;
+	text-align: center;
+}
+
+.key-indicator.pk {
+	background-color: #f59e0b;
+	color: #fff;
+}
+
+.key-indicator.fk {
+	background-color: #10b981;
+	color: #fff;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+	.schema-controls {
+		padding: 10px;
+	}
+
+	.schema-legend {
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.table-column {
+		grid-template-columns: 35px 1fr 70px;
+		padding: 6px 10px;
+	}
+}
