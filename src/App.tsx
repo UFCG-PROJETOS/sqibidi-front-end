@@ -22,6 +22,9 @@ export type TableData = {
 	rows: Record<string, SqlValue>[];
 };
 
+const regexChecker =
+	/(\s*([\0\b\'\"\n\r\t\%\_\\]*\s*(((select\s+\S.*\s+from\s+\S+)|(insert\s+into\s+\S+)|(update\s+\S+\s+set\s+\S+)|(delete\s+from\s+\S+)|(((drop)|(create)|(alter)|(backup))\s+((table)|(index)|(function)|(PROCEDURE)|(ROUTINE)|(SCHEMA)|(TRIGGER)|(USER)|(VIEW))\s+\S+)|(truncate\s+table\s+\S+)|(exec\s+)|(\/\*)|(--)))(\s*[\;]\s*)*)+)/i;
+
 function App() {
 	const [query, setQuery] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
