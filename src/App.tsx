@@ -47,37 +47,44 @@ function App() {
 				);
 				const sqlCode = response.data.code;
 
-				databaseFetched.exec(sqlCode);
+				if (databaseFetched) {
+					databaseFetched.exec(sqlCode);
 
-				setDb(databaseFetched);
+					setDb(databaseFetched);
 
-				// Extract schema
-				const tablesResult = databaseFetched.exec(
-					"SELECT name FROM sqlite_master WHERE type='table'",
-				);
-				if (tablesResult.length > 0) {
-					const tables = tablesResult[0].values.map((row, index) => {
-						const tableName = row[0] as string;
-						const columnsResult = databaseFetched.exec(
-							`PRAGMA table_info(${tableName})`,
-						);
-						const columns = columnsResult[0].values.map((col: SqlValue[]) => ({
-							name: col[1] as string,
-							type: col[2] as string,
-							isPrimaryKey: (col[5] as number) === 1,
-						}));
+					// Extrai o schema do banco de dados
+					const tablesResult = databaseFetched.exec(
+						"SELECT name FROM sqlite_master WHERE type='table'",
+					);
+					if (tablesResult.length > 0) {
+						const tables = tablesResult[0].values.map((row, index) => {
+							const tableName = row[0] as string;
+							const columnsResult = databaseFetched.exec(
+								`PRAGMA table_info(${tableName})`,
+							);
+							const columns = columnsResult[0].values.map(
+								(col: SqlValue[]) => ({
+									name: col[1] as string,
+									type: col[2] as string,
+									isPrimaryKey: (col[5] as number) === 1,
+								}),
+							);
 
-						return {
-							name: tableName,
-							columns,
-							position: {
-								x: (index % 3) * 320,
-								y: Math.floor(index / 3) * 250,
-							},
-						};
-					});
+							return {
+								name: tableName,
+								columns,
+								position: {
+									x: (index % 3) * 320,
+									y: Math.floor(index / 3) * 250,
+								},
+							};
+						});
 
-					setSchema({ tables, relationships: [] });
+						setSchema({ tables, relationships: [] });
+					}
+				} else {
+					// Caso algo muito inesperado aconteça
+					throw new Error("Database object could not be initialized.");
 				}
 			} catch (err) {
 				setError(
