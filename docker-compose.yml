@@ -4,5 +4,5 @@ services:
   frontend:
     build: ./
     ports:
-      - "8080:3000"
+      - "5173:5173"
     container_name: sqibidi_frontend
