@@ -1,11 +1,11 @@
 import {
-    Alert,
-    Box,
-    CircularProgress,
-    Container,
-    Tab,
-    Tabs,
-    Typography,
+	Alert,
+	Box,
+	CircularProgress,
+	Container,
+	Tab,
+	Tabs,
+	Typography,
 } from "@mui/material";
 import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
@@ -17,227 +17,273 @@ import SchemaViewer from "./components/schema-viewer/SchemaViewer";
 import type { Schema } from "./components/schema-viewer/types";
 
 export type TableData = {
-    columns: string[];
-    rows: Record<string, SqlValue>[];
+	columns: string[];
+	rows: Record<string, SqlValue>[];
 };
 
 function App() {
-    const [query, setQuery] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [tableData, setTableData] = useState<TableData | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [db, setDb] = useState<Database | null>(null);
-    const [schema, setSchema] = useState<Schema | null>(null);
-    const [selectedTable, setSelectedTable] = useState<string | undefined>();
-    const [activeTab, setActiveTab] = useState("editor");
+	const [query, setQuery] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
+	const [tableData, setTableData] = useState<TableData | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const [db, setDb] = useState<Database | null>(null);
+	const [schema, setSchema] = useState<Schema | null>(null);
+	const [selectedTable, setSelectedTable] = useState<string | undefined>();
+	const [activeTab, setActiveTab] = useState("editor");
+	const [expectedResult, setExpectedResult] = useState<TableData | null>(null);
+	const [isQuestionLoading, setIsQuestionLoading] = useState(true);
 
-    useEffect(() => {
-        let databaseFetched: Database | null = null;
+	useEffect(() => {
+		let databaseFetched: Database | null = null;
 
-        const initDb = async () => {
-            try {
-                const SQL = await initSqlJs({
-                    locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
-                });
+		const initDb = async () => {
+			try {
+				const SQL = await initSqlJs({
+					locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
+				});
 
-                databaseFetched = new SQL.Database();
+				databaseFetched = new SQL.Database();
 
-                const response = await axios.get(
-                    "http://localhost:8000/question/day_question/",
-                );
-                const sqlCode = response.data.code;
+				const dayQuestionResponse = await axios.get(
+					"http://localhost:8000/question/day_question/",
+				);
+				const sqlCode = dayQuestionResponse.data.code;
+				const questionId = dayQuestionResponse.data.id;
 
-                if (databaseFetched) {
-                    // SOLUÇÃO: Criamos uma constante com o tipo garantido (não-nulo).
-                    const dbInstance = databaseFetched;
+				if (!questionId) {
+					throw new Error("ID da questão diária não foi retornado pela API.");
+				}
 
-                    dbInstance.exec(sqlCode);
-                    setDb(dbInstance);
+				if (databaseFetched) {
+					const dbInstance = databaseFetched;
 
-                    // Extrai o schema do banco de dados
-                    const tablesResult = dbInstance.exec(
-                        "SELECT name FROM sqlite_master WHERE type='table'",
-                    );
-                    if (tablesResult.length > 0) {
-                        const tables = tablesResult[0].values.map((row, index) => {
-                            const tableName = row[0] as string;
-                            // Usamos a nova constante aqui dentro, onde o TypeScript agora confia.
-                            const columnsResult = dbInstance.exec(
-                                `PRAGMA table_info(${tableName})`,
-                            );
-                            const columns = columnsResult[0].values.map((col: SqlValue[]) => ({
-                                name: col[1] as string,
-                                type: col[2] as string,
-                                isPrimaryKey: (col[5] as number) === 1,
-                            }));
+					dbInstance.exec(sqlCode);
+					setDb(dbInstance);
 
-                            return {
-                                name: tableName,
-                                columns,
-                                position: {
-                                    x: (index % 3) * 320,
-                                    y: Math.floor(index / 3) * 250,
-                                },
-                            };
-                        });
+					const tablesResult = dbInstance.exec(
+						"SELECT name FROM sqlite_master WHERE type='table'",
+					);
+					if (tablesResult.length > 0) {
+						const tables = tablesResult[0].values.map((row, index) => {
+							const tableName = row[0] as string;
+							const columnsResult = dbInstance.exec(
+								`PRAGMA table_info(${tableName})`,
+							);
+							const columns = columnsResult[0].values.map(
+								(col: SqlValue[]) => ({
+									name: col[1] as string,
+									type: col[2] as string,
+									isPrimaryKey: (col[5] as number) === 1,
+								}),
+							);
 
-                        setSchema({ tables, relationships: [] });
-                    }
-                } else {
-                    // Caso algo muito inesperado aconteça
-                    throw new Error("Database object could not be initialized.");
-                }
-            } catch (err) {
-                setError(
-                    `Failed to initialize database: ${
-                        err instanceof Error ? err.message : "Unknown error"
-                    }`,
-                );
-            }
-        };
+							return {
+								name: tableName,
+								columns,
+								position: {
+									x: (index % 3) * 320,
+									y: Math.floor(index / 3) * 250,
+								},
+							};
+						});
 
-        initDb();
+						setSchema({ tables, relationships: [] });
+					}
+				} else {
+					throw new Error("Database object could not be initialized.");
+				}
 
-        return () => {
-            if (databaseFetched) {
-                databaseFetched.close();
-            }
-        };
-    }, []);
+				console.log(questionId);
+				const expectedAnswerResponse = await axios.get(
+					`http://localhost:8000/question/${questionId}`,
+				);
+				const rawExpectedAnswer = expectedAnswerResponse.data.expected_answer;
+				let formattedExpectedAnswer: TableData | null = null;
 
-    const executeQuery = useCallback(async () => {
-        if (!query.trim() || !db) return;
-        setIsLoading(true);
-        setError(null);
-        setTableData(null);
+				if (Array.isArray(rawExpectedAnswer)) {
+					const columns = rawExpectedAnswer.length > 0 ? Object.keys(rawExpectedAnswer[0]) : [];
+					const rows = rawExpectedAnswer;
 
-        try {
-            const result = db.exec(query);
+					formattedExpectedAnswer = {
+						columns: columns,
+						rows: rows,
+					};
+				}
+				setExpectedResult(formattedExpectedAnswer);
+			} catch (err) {
+				setError(
+					`Failed to initialize database: ${
+						err instanceof Error ? err.message : "Unknown error"
+					}`,
+				);
+			} finally {
+				setIsQuestionLoading(false);
+			}
+		};
 
-            if (result.length === 0) {
-                setTableData({
-                    columns: ["Result"],
-                    rows: [{ Result: "Query executed successfully (no results)" }],
-                });
-                return;
-            }
+		initDb();
 
-            const firstResult = result[0];
-            const columns = firstResult.columns;
-            const rows = firstResult.values.map((row) => {
-                const rowData: Record<string, SqlValue> = {};
-                columns.forEach((col, index) => {
-                    rowData[col] = row[index];
-                });
-                return rowData;
-            });
+		return () => {
+			if (databaseFetched) {
+				databaseFetched.close();
+			}
+		};
+	}, []);
 
-            setTableData({ columns, rows });
-        } catch (err) {
-            setError(
-                `Error executing query: ${
-                    err instanceof Error ? err.message : "Unknown error"
-                }`,
-            );
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [query, db]);
+	const executeQuery = useCallback(async () => {
+		if (!query.trim() || !db) return;
+		setIsLoading(true);
+		setError(null);
+		setTableData(null);
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            executeQuery();
-        }
-    };
+		try {
+			const result = db.exec(query);
 
-    const handleTableSelect = (tableName: string) => {
-        setSelectedTable(tableName);
-        setQuery(`SELECT * FROM ${tableName};`);
-        setActiveTab("editor");
-    };
+			if (result.length === 0) {
+				setTableData({
+					columns: ["Result"],
+					rows: [{ Result: "Query executed successfully (no results)" }],
+				});
+				return;
+			}
 
-    const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
-        setActiveTab(newValue);
-    };
+			const firstResult = result[0];
+			const columns = firstResult.columns;
+			const rows = firstResult.values.map((row) => {
+				const rowData: Record<string, SqlValue> = {};
+				columns.forEach((col, index) => {
+					rowData[col] = row[index];
+				});
+				return rowData;
+			});
 
-    return (
-        <div>
-            <Header />
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                    <Tabs value={activeTab} onChange={handleTabChange}>
-                        <Tab label="Editor" value="editor" />
-                        <Tab label="Schema" value="schema" />
-                    </Tabs>
-                </Box>
+			setTableData({ columns, rows });
+		} catch (err) {
+			setError(
+				`Error executing query: ${
+					err instanceof Error ? err.message : "Unknown error"
+				}`,
+			);
+			console.error(err);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [query, db]);
 
-                <Box sx={{ pt: 3 }}>
-                    {activeTab === "editor" && (
-                        <>
-                            {isLoading ? (
-                                <Alert severity="info" sx={{ mb: 3 }}>
-                                    Executing query...
-                                </Alert>
-                            ) : error ? (
-                                <Alert severity="error" sx={{ mb: 3 }}>
-                                    {error}
-                                </Alert>
-                            ) : (
-                                tableData && <TableBox tableData={tableData} />
-                            )}
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+			e.preventDefault();
+			executeQuery();
+		}
+	};
 
-                            <TextBox
-                                query={query}
-                                handleKeyDown={handleKeyDown}
-                                setQuery={setQuery}
-                                isLoading={isLoading}
-                                db={db}
-                                executeQuery={executeQuery}
-                            />
+	const handleTableSelect = (tableName: string) => {
+		setSelectedTable(tableName);
+		setQuery(`SELECT * FROM ${tableName};`);
+		setActiveTab("editor");
+	};
 
-                            {!db && !error && (
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 2,
-                                        marginTop: 10,
-                                    }}
-                                >
-                                    <CircularProgress size={24} />
-                                    <Typography>Initializing database...</Typography>
-                                </Box>
-                            )}
-                        </>
-                    )}
+	const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+		setActiveTab(newValue);
+	};
 
-                    {activeTab === "schema" &&
-                        (schema ? (
-                            <SchemaViewer
-                                schema={schema}
-                                selectedTable={selectedTable}
-                                onTableSelect={handleTableSelect}
-                            />
-                        ) : (
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 2,
-                                    marginTop: 10,
-                                }}
-                            >
-                                <CircularProgress size={24} />
-                                <Typography>Loading schema...</Typography>
-                            </Box>
-                        ))}
-                </Box>
-            </Container>
-        </div>
-    );
+	return (
+		<div>
+			<Header />
+			<Container maxWidth="lg" sx={{ py: 4 }}>
+				<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+					<Tabs value={activeTab} onChange={handleTabChange}>
+						<Tab label="Editor" value="editor" />
+						<Tab label="Schema" value="schema" />
+						<Tab label="Resposta Esperada" value="expected" />
+					</Tabs>
+				</Box>
+
+				<Box sx={{ pt: 3 }}>
+					{activeTab === "editor" && (
+						<>
+							{isLoading ? (
+								<Alert severity="info" sx={{ mb: 3 }}>
+									Executing query...
+								</Alert>
+							) : error ? (
+								<Alert severity="error" sx={{ mb: 3 }}>
+									{error}
+								</Alert>
+							) : (
+								tableData && <TableBox tableData={tableData} />
+							)}
+
+							<TextBox
+								query={query}
+								handleKeyDown={handleKeyDown}
+								setQuery={setQuery}
+								isLoading={isLoading}
+								db={db}
+								executeQuery={executeQuery}
+							/>
+
+							{!db && !error && (
+								<Box
+									sx={{
+										display: "flex",
+										alignItems: "center",
+										gap: 2,
+										marginTop: 10,
+									}}
+								>
+									<CircularProgress size={24} />
+									<Typography>Initializing database...</Typography>
+								</Box>
+							)}
+						</>
+					)}
+
+					{activeTab === "schema" &&
+						(schema ? (
+							<SchemaViewer
+								schema={schema}
+								selectedTable={selectedTable}
+								onTableSelect={handleTableSelect}
+							/>
+						) : (
+							<Box
+								sx={{
+									display: "flex",
+									alignItems: "center",
+									gap: 2,
+									marginTop: 10,
+								}}
+							>
+								<CircularProgress size={24} />
+								<Typography>Loading schema...</Typography>
+							</Box>
+						))}
+
+					{activeTab === "expected" &&
+						(isQuestionLoading ? (
+							<Box
+								sx={{
+									display: "flex",
+									alignItems: "center",
+									gap: 2,
+									marginTop: 10,
+								}}
+							>
+								<CircularProgress size={24} />
+								<Typography>Carregando resposta esperada...</Typography>
+							</Box>
+						) : expectedResult ? (
+							<TableBox tableData={expectedResult} />
+						) : (
+							<Alert severity="warning">
+								A resposta esperada não foi fornecida para este desafio.
+							</Alert>
+						))}
+				</Box>
+			</Container>
+		</div>
+	);
 }
 
 export default App;
-
