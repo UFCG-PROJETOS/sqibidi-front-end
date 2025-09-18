@@ -2,6 +2,7 @@ name: publishContainer
 
 on:
   push:
+    branches: [ "main" ]
 
 jobs:
   docker:
