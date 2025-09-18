@@ -3,6 +3,7 @@ import {
 	Box,
 	CircularProgress,
 	Container,
+	Snackbar,
 	Tab,
 	Tabs,
 	Typography,
@@ -32,6 +33,53 @@ function App() {
 	const [activeTab, setActiveTab] = useState("editor");
 	const [expectedResult, setExpectedResult] = useState<TableData | null>(null);
 	const [isQuestionLoading, setIsQuestionLoading] = useState(true);
+	const [feedback, setFeedback] = useState<{
+		message: string;
+		type: "success" | "error";
+	} | null>(null);
+
+	const areTableDataEqual = useCallback(
+		(data1: TableData | null, data2: TableData | null): boolean => {
+			if (!data1 || !data2) {
+				return false;
+			}
+
+			if (
+				data1.columns.length !== data2.columns.length ||
+				!data1.columns.every((col, i) => col === data2.columns[i])
+			) {
+				return false;
+			}
+
+			if (data1.rows.length !== data2.rows.length) {
+				return false;
+			}
+
+			for (let i = 0; i < data1.rows.length; i++) {
+				const row1 = data1.rows[i];
+				const row2 = data2.rows[i];
+
+				const keys1 = Object.keys(row1);
+				const keys2 = Object.keys(row2);
+
+				if (
+					keys1.length !== keys2.length ||
+					!keys1.every((key) => keys2.includes(key))
+				) {
+					return false;
+				}
+
+				for (const key of keys1) {
+					if (row1[key] !== row2[key]) {
+						return false;
+					}
+				}
+			}
+
+			return true;
+		},
+		[],
+	);
 
 	useEffect(() => {
 		let databaseFetched: Database | null = null;
@@ -93,7 +141,6 @@ function App() {
 					throw new Error("Database object could not be initialized.");
 				}
 
-				console.log(questionId);
 				const expectedAnswerResponse = await axios.get(
 					`http://localhost:8000/question/${questionId}`,
 				);
@@ -101,7 +148,10 @@ function App() {
 				let formattedExpectedAnswer: TableData | null = null;
 
 				if (Array.isArray(rawExpectedAnswer)) {
-					const columns = rawExpectedAnswer.length > 0 ? Object.keys(rawExpectedAnswer[0]) : [];
+					const columns =
+						rawExpectedAnswer.length > 0
+							? Object.keys(rawExpectedAnswer[0])
+							: [];
 					const rows = rawExpectedAnswer;
 
 					formattedExpectedAnswer = {
@@ -157,7 +207,19 @@ function App() {
 				return rowData;
 			});
 
-			setTableData({ columns, rows });
+			const userResult: TableData = { columns, rows };
+			setTableData(userResult);
+
+			if (expectedResult) {
+				if (areTableDataEqual(userResult, expectedResult)) {
+					setFeedback({ message: "Parabéns! Você acertou!", type: "success" });
+				} else {
+					setFeedback({
+						message: "Tente novamente. O resultado não está correto.",
+						type: "error",
+					});
+				}
+			}
 		} catch (err) {
 			setError(
 				`Error executing query: ${
@@ -168,7 +230,7 @@ function App() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [query, db]);
+	}, [query, db, expectedResult, areTableDataEqual]);
 
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
@@ -282,6 +344,23 @@ function App() {
 						))}
 				</Box>
 			</Container>
+
+			{feedback && (
+				<Snackbar
+					open
+					autoHideDuration={6000}
+					onClose={() => setFeedback(null)}
+					anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+				>
+					<Alert
+						onClose={() => setFeedback(null)}
+						severity={feedback.type}
+						sx={{ width: "100%" }}
+					>
+						{feedback.message}
+					</Alert>
+				</Snackbar>
+			)}
 		</div>
 	);
 }
