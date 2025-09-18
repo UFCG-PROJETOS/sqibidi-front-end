@@ -18,4 +18,6 @@ COPY --from=builder ./dist ./dist
 
 EXPOSE 5173
 
+EXPOSE 3000
+
 CMD ["serve", "-s", "dist", "-l", "5173"]
